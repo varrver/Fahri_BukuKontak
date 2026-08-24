@@ -13,7 +13,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Model data untuk kontak
 class Kontak {
   final String nama;
   final String email;
@@ -30,15 +29,12 @@ class KontakPage extends StatefulWidget {
 }
 
 class _KontakPageState extends State<KontakPage> {
-  // List untuk menampung data kontak
   final List<Kontak> _listKontak = [];
-
-  // Controller untuk masing-masing field input
+  
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _noHpController = TextEditingController();
 
-  // Fungsi untuk menyimpan data
   void _simpanKontak() {
     if (_namaController.text.isNotEmpty &&
         _emailController.text.isNotEmpty &&
@@ -51,8 +47,6 @@ class _KontakPageState extends State<KontakPage> {
             noHp: _noHpController.text,
           ),
         );
-
-        // Mengosongkan form setelah simpan
         _namaController.clear();
         _emailController.clear();
         _noHpController.clear();
@@ -62,7 +56,6 @@ class _KontakPageState extends State<KontakPage> {
 
   @override
   void dispose() {
-    // Membersihkan controller dari memori
     _namaController.dispose();
     _emailController.dispose();
     _noHpController.dispose();
@@ -78,7 +71,6 @@ class _KontakPageState extends State<KontakPage> {
       ),
       body: Column(
         children: [
-          // Bagian Form Input
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -107,8 +99,7 @@ class _KontakPageState extends State<KontakPage> {
               ],
             ),
           ),
-
-          // Bagian Daftar Kontak (ListView)
+          
           Expanded(
             child: ListView.builder(
               itemCount: _listKontak.length,
