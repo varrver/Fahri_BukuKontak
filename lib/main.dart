@@ -217,6 +217,8 @@ class AddContactPage extends StatefulWidget {
 }
 
 class _AddContactPageState extends State<AddContactPage> {
+  final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -250,36 +252,72 @@ class _AddContactPageState extends State<AddContactPage> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nama Lengkap'),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'No Handphone'),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _categoryController,
-                  decoration: const InputDecoration(labelText: 'Kategori'),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    _addContact();
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Simpan'),
-                ),
-              ],
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Lengkap',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Nama wajib diisi';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Email wajib diisi';
+                      }
+                      if (!value.contains('@')) {
+                        return 'Email tidak valid';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'No Handphone',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'No handphone wajib diisi';
+                      }
+                      if (value.contains(RegExp(r'\D'))) {
+                        return 'No handphone hanya boleh angka';
+                      }
+                      if (value.length < 10) {
+                        return 'No handphone minimal 10 angka';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _categoryController,
+                    decoration: const InputDecoration(labelText: 'Kategori'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        _addContact();
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: const Text('Simpan'),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
