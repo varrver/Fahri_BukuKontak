@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 void main() {
@@ -34,7 +36,6 @@ class Contact {
   });
 }
 
-// Global state list untuk kontak umum dan kontak favorit
 final List<Contact> _contacts = [];
 final List<Contact> _favorites = [];
 
@@ -48,7 +49,23 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,7 +79,10 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: const TabBarView(children: [ContactPage(), FavoritePage()]),
+      body: TabBarView(
+        controller: _tabController,
+        children: [ContactPage(), FavoritePage()],
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -125,30 +145,81 @@ class ContactPage extends StatefulWidget {
 }
 
 class _ContactPageState extends State<ContactPage> {
+  final StreamController<String> _searchController =
+      StreamController<String>();
+
+  @override
+  void dispose() {
+    _searchController.close();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _contacts.isEmpty
-          ? const Center(child: Text('Belum ada kontak.'))
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _contacts.length,
-                    itemBuilder: (context, index) {
-                      final contact = _contacts[index];
-                      return ListTile(
-                        leading: CircleAvatar(child: Text(contact.name[0])),
-                        title: Text(contact.name),
-                        subtitle: Text(
-                          '${contact.email}\n${contact.phone}\n${contact.category ?? 'Tanpa kategori'}',
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                labelText: 'Cari Kontak',
+                hintText: 'Cari berdasarkan nama atau kategori...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (teks) {
+                _searchController.add(teks);
+              },
             ),
+          ),
+          Expanded(
+            child: StreamBuilder<String>(
+              stream: _searchController.stream,
+              initialData: '',
+              builder: (context, snapshot) {
+                final query = (snapshot.data ?? '').toLowerCase();
+                final filteredContacts = _contacts.where((contact) {
+                  final nameMatch =
+                      contact.name.toLowerCase().contains(query);
+                  final categoryMatch = (contact.category ?? '')
+                      .toLowerCase()
+                      .contains(query);
+                  return nameMatch || categoryMatch;
+                }).toList();
+
+                if (filteredContacts.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _contacts.isEmpty
+                          ? 'Belum ada kontak.'
+                          : 'Kontak tidak ditemukan.',
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: filteredContacts.length,
+                  itemBuilder: (context, index) {
+                    final contact = filteredContacts[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        child: Text(
+                          contact.name.isNotEmpty ? contact.name[0] : '?',
+                        ),
+                      ),
+                      title: Text(contact.name),
+                      subtitle: Text(
+                        '${contact.email}\n${contact.phone}\n${contact.category ?? 'Tanpa kategori'}',
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(
