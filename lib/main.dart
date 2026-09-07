@@ -24,8 +24,14 @@ class Contact {
   final String name;
   final String email;
   final String phone;
+  final String? category;
 
-  Contact({required this.name, required this.email, required this.phone});
+  Contact({
+    required this.name,
+    required this.email,
+    required this.phone,
+    this.category,
+  });
 }
 
 // Global state list untuk kontak umum dan kontak favorit
@@ -134,7 +140,9 @@ class _ContactPageState extends State<ContactPage> {
                       return ListTile(
                         leading: CircleAvatar(child: Text(contact.name[0])),
                         title: Text(contact.name),
-                        subtitle: Text('${contact.email}\n${contact.phone}'),
+                        subtitle: Text(
+                          '${contact.email}\n${contact.phone}\n${contact.category ?? 'Tanpa kategori'}',
+                        ),
                       );
                     },
                   ),
@@ -212,6 +220,7 @@ class _AddContactPageState extends State<AddContactPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
 
   void _addContact() {
     if (_nameController.text.isNotEmpty &&
@@ -222,6 +231,9 @@ class _AddContactPageState extends State<AddContactPage> {
           name: _nameController.text,
           email: _emailController.text,
           phone: _phoneController.text,
+          category: _categoryController.text.isEmpty
+              ? null
+              : _categoryController.text,
         ),
       );
     }
@@ -253,6 +265,11 @@ class _AddContactPageState extends State<AddContactPage> {
                 TextField(
                   controller: _phoneController,
                   decoration: const InputDecoration(labelText: 'No Handphone'),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: _categoryController,
+                  decoration: const InputDecoration(labelText: 'Kategori'),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
