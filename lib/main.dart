@@ -30,7 +30,7 @@ class Contact {
 
 // Global state list untuk kontak umum dan kontak favorit
 final List<Contact> _contacts = [];
-final List<Contact> _favoriteContacts = [];
+final List<Contact> _favorites = [];
 
 // Halaman Beranda
 class HomePage extends StatefulWidget {
@@ -167,15 +167,15 @@ class _FavoritePageState extends State<FavoritePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _favoriteContacts.isEmpty
+      body: _favorites.isEmpty
           ? const Center(child: Text('Belum ada kontak favorit.'))
           : Column(
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _favoriteContacts.length,
+                    itemCount: _favorites.length,
                     itemBuilder: (context, index) {
-                      final contact = _favoriteContacts[index];
+                      final contact = _favorites[index];
                       return ListTile(
                         leading: CircleAvatar(child: Text(contact.name[0])),
                         title: Text(contact.name),
@@ -288,7 +288,7 @@ class _AddFavoritePageState extends State<AddFavoritePage> {
     if (_nameController.text.isNotEmpty &&
         _emailController.text.isNotEmpty &&
         _phoneController.text.isNotEmpty) {
-      _favoriteContacts.add(
+      _favorites.add(
         Contact(
           name: _nameController.text,
           email: _emailController.text,
