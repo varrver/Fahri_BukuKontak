@@ -5,17 +5,17 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Buku Kontak',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        appBarTheme: const AppBarTheme(color: Colors.blue),
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.blue)),
+      home: const DefaultTabController(
+        length: 2,
+        child: HomePage(title: 'Buku Kontak'),
       ),
-      home: const DefaultTabController(length: 2, child: HomePage()),
     );
   }
 }
@@ -34,7 +34,9 @@ final List<Contact> _favoriteContacts = [];
 
 // Halaman Beranda
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.title});
+
+  final String title;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -45,7 +47,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Buku Kontak'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
         bottom: const TabBar(
           tabs: [
             Tab(icon: Icon(Icons.person), text: 'Kontak'),
@@ -53,19 +56,16 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: const TabBarView(
-        children: [
-          ContactPage(),
-          FavoritePage(),
-        ],
-      ),
+      body: const TabBarView(children: [ContactPage(), FavoritePage()]),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Text('Buku Kontak'),
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryFixedDim,
+              ),
+              child: Text(widget.title),
             ),
             ListTile(
               title: const Text('Kontak'),
@@ -80,7 +80,9 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddContactPage()),
+                  MaterialPageRoute(
+                    builder: (context) => const AddContactPage(),
+                  ),
                 );
               },
             ),
@@ -130,7 +132,7 @@ class _ContactPageState extends State<ContactPage> {
                     itemBuilder: (context, index) {
                       final contact = _contacts[index];
                       return ListTile(
-                        leading: const Icon(Icons.person),
+                        leading: CircleAvatar(child: Text(contact.name[0])),
                         title: Text(contact.name),
                         subtitle: Text('${contact.email}\n${contact.phone}'),
                       );
@@ -175,7 +177,7 @@ class _FavoritePageState extends State<FavoritePage> {
                     itemBuilder: (context, index) {
                       final contact = _favoriteContacts[index];
                       return ListTile(
-                        leading: const Icon(Icons.person),
+                        leading: CircleAvatar(child: Text(contact.name[0])),
                         title: Text(contact.name),
                         subtitle: Text('${contact.email}\n${contact.phone}'),
                       );
@@ -228,7 +230,10 @@ class _AddContactPageState extends State<AddContactPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tambah Kontak')),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Tambah Kontak'),
+      ),
       body: Column(
         children: [
           Padding(
@@ -296,7 +301,10 @@ class _AddFavoritePageState extends State<AddFavoritePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tambah Favorit')),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Tambah Favorit'),
+      ),
       body: Column(
         children: [
           Padding(
@@ -341,7 +349,10 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tentang')),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Tentang'),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
