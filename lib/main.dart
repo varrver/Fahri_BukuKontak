@@ -13,11 +13,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Buku Kontak',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.blue)),
-      home: const DefaultTabController(
-        length: 2,
-        child: HomePage(title: 'Buku Kontak'),
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+      home: const HomePage(title: 'Buku Kontak'),
     );
   }
 }
@@ -72,8 +69,9 @@ class _HomePageState extends State<HomePage>
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
-        bottom: const TabBar(
-          tabs: [
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
             Tab(icon: Icon(Icons.person), text: 'Kontak'),
             Tab(icon: Icon(Icons.star), text: 'Favorit'),
           ],
@@ -81,7 +79,7 @@ class _HomePageState extends State<HomePage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [ContactPage(), FavoritePage()],
+        children: const [ContactPage(), FavoritePage()],
       ),
       drawer: Drawer(
         child: ListView(
@@ -97,25 +95,29 @@ class _HomePageState extends State<HomePage>
               title: const Text('Kontak'),
               leading: const Icon(Icons.contact_page),
               onTap: () {
+                _tabController.animateTo(0);
                 Navigator.pop(context);
               },
             ),
             ListTile(
               title: const Text('Tambah Kontak'),
               leading: const Icon(Icons.add),
-              onTap: () {
-                Navigator.push(
+              onTap: () async {
+                Navigator.pop(context);
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const AddContactPage(),
                   ),
                 );
+                setState(() {});
               },
             ),
             ListTile(
               title: const Text('Favorit'),
               leading: const Icon(Icons.star),
               onTap: () {
+                _tabController.animateTo(1);
                 Navigator.pop(context);
               },
             ),
@@ -136,7 +138,7 @@ class _HomePageState extends State<HomePage>
   }
 }
 
-// Halaman Kontak Utama
+// Halaman Kontak
 class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
 
@@ -152,6 +154,37 @@ class _ContactPageState extends State<ContactPage> {
   void dispose() {
     _searchController.close();
     super.dispose();
+  }
+
+  void _deleteContact(Contact contact) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: Text('Apakah Anda yakin ingin menghapus "${contact.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                _contacts.remove(contact);
+                Navigator.pop(context);
+                setState(() {});
+              },
+              child: const Text(
+                'Hapus',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -212,6 +245,33 @@ class _ContactPageState extends State<ContactPage> {
                       subtitle: Text(
                         '${contact.email}\n${contact.phone}\n${contact.category ?? 'Tanpa kategori'}',
                       ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () async {
+                              final originalIndex = _contacts.indexOf(contact);
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditContactPage(
+                                    contact: contact,
+                                    index: originalIndex,
+                                  ),
+                                ),
+                              );
+                              setState(() {});
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              _deleteContact(contact);
+                            },
+                          ),
+                        ],
+                      ),
                     );
                   },
                 );
@@ -234,7 +294,7 @@ class _ContactPageState extends State<ContactPage> {
   }
 }
 
-// Halaman Kontak Favorit
+// Halaman Favorit
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
 
@@ -243,11 +303,42 @@ class FavoritePage extends StatefulWidget {
 }
 
 class _FavoritePageState extends State<FavoritePage> {
+  void _deleteFavoriteContact(Contact contact) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: Text('Apakah Anda yakin ingin menghapus "${contact.name}" dari favorit?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                _favorites.remove(contact);
+                Navigator.pop(context);
+                setState(() {});
+              },
+              child: const Text(
+                'Hapus',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _favorites.isEmpty
-          ? const Center(child: Text('Belum ada kontak favorit.'))
+          ? const Center(child: Text('Belum ada favorit.'))
           : Column(
               children: [
                 Expanded(
@@ -259,6 +350,12 @@ class _FavoritePageState extends State<FavoritePage> {
                         leading: CircleAvatar(child: Text(contact.name[0])),
                         title: Text(contact.name),
                         subtitle: Text('${contact.email}\n${contact.phone}'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            _deleteFavoriteContact(contact);
+                          },
+                        ),
                       );
                     },
                   ),
@@ -279,7 +376,7 @@ class _FavoritePageState extends State<FavoritePage> {
   }
 }
 
-// Halaman Tambah Kontak Umum
+// Halaman Tambah Kontak
 class AddContactPage extends StatefulWidget {
   const AddContactPage({super.key});
 
@@ -397,7 +494,7 @@ class _AddContactPageState extends State<AddContactPage> {
   }
 }
 
-// Halaman Tambah Kontak Favorit
+// Halaman Tambah Favorit
 class AddFavoritePage extends StatefulWidget {
   const AddFavoritePage({super.key});
 
@@ -504,3 +601,142 @@ class AboutPage extends StatelessWidget {
     );
   }
 }
+
+// Halaman Edit Kontak
+class EditContactPage extends StatefulWidget {
+  final Contact contact;
+  final int index;
+
+  const EditContactPage({
+    super.key,
+    required this.contact,
+    required this.index,
+  });
+
+  @override
+  State<EditContactPage> createState() => _EditContactPageState();
+}
+
+class _EditContactPageState extends State<EditContactPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  late TextEditingController _categoryController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.contact.name);
+    _emailController = TextEditingController(text: widget.contact.email);
+    _phoneController = TextEditingController(text: widget.contact.phone);
+    _categoryController =
+        TextEditingController(text: widget.contact.category ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _categoryController.dispose();
+    super.dispose();
+  }
+
+  void _updateContact() {
+    if (widget.index >= 0 && widget.index < _contacts.length) {
+      _contacts[widget.index] = Contact(
+        name: _nameController.text,
+        email: _emailController.text,
+        phone: _phoneController.text,
+        category: _categoryController.text.isEmpty
+            ? null
+            : _categoryController.text,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Edit Kontak'),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Lengkap',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Nama wajib diisi';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email wajib diisi';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Email tidak valid';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'No Handphone',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'No handphone wajib diisi';
+                    }
+                    if (value.contains(RegExp(r'\D'))) {
+                      return 'No handphone hanya boleh angka';
+                    }
+                    if (value.length < 10) {
+                      return 'No handphone minimal 10 angka';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _categoryController,
+                  decoration: const InputDecoration(labelText: 'Kategori'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      _updateContact();
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Simpan Perubahan'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
