@@ -242,68 +242,85 @@ class _ContactPageState extends State<ContactPage> {
             child: StreamBuilder<String>(
               stream: _searchController.stream,
               initialData: '',
-              builder: (context, snapshot) {
-                final query = (snapshot.data ?? '').toLowerCase();
-                final filteredContacts = _contacts.where((contact) {
-                  final nameMatch =
-                      contact.name.toLowerCase().contains(query);
-                  final categoryMatch = (contact.category ?? '')
-                      .toLowerCase()
-                      .contains(query);
-                  return nameMatch || categoryMatch;
-                }).toList();
+              builder: (context, searchSnapshot) {
+                final query = (searchSnapshot.data ?? '').toLowerCase();
+                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _kontakRef.snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('Terjadi kesalahan: ${snapshot.error}'),
+                      );
+                    }
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final semuaKontak = (snapshot.data?.docs ?? [])
+                        .map((doc) => Contact.fromMap(doc.id, doc.data()))
+                        .toList();
+                    final filteredContacts = semuaKontak.where((contact) {
+                      final nameMatch =
+                          contact.name.toLowerCase().contains(query);
+                      final categoryMatch = (contact.category ?? '')
+                          .toLowerCase()
+                          .contains(query);
+                      return nameMatch || categoryMatch;
+                    }).toList();
 
-                if (filteredContacts.isEmpty) {
-                  return Center(
-                    child: Text(
-                      _contacts.isEmpty
-                          ? 'Belum ada kontak.'
-                          : 'Kontak tidak ditemukan.',
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  itemCount: filteredContacts.length,
-                  itemBuilder: (context, index) {
-                    final contact = filteredContacts[index];
-                    return ListTile(
-                      leading: CircleAvatar(
+                    if (filteredContacts.isEmpty) {
+                      return Center(
                         child: Text(
-                          contact.name.isNotEmpty ? contact.name[0] : '?',
+                          semuaKontak.isEmpty
+                              ? 'Belum ada kontak.'
+                              : 'Kontak tidak ditemukan.',
                         ),
-                      ),
-                      title: Text(contact.name),
-                      subtitle: Text(
-                        '${contact.email}\n${contact.phone}\n${contact.category ?? 'Tanpa kategori'}',
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () async {
-                              final originalIndex = _contacts.indexOf(contact);
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditContactPage(
-                                    contact: contact,
-                                    index: originalIndex,
-                                  ),
-                                ),
-                              );
-                              setState(() {});
-                            },
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: filteredContacts.length,
+                      itemBuilder: (context, index) {
+                        final contact = filteredContacts[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            child: Text(
+                              contact.name.isNotEmpty ? contact.name[0] : '?',
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              _deleteContact(contact);
-                            },
+                          title: Text(contact.name),
+                          subtitle: Text(
+                            '${contact.email}\n${contact.phone}\n${contact.category ?? 'Tanpa kategori'}',
                           ),
-                        ],
-                      ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () async {
+                                  final originalIndex =
+                                      _contacts.indexOf(contact);
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditContactPage(
+                                        contact: contact,
+                                        index: originalIndex,
+                                      ),
+                                    ),
+                                  );
+                                  setState(() {});
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  _deleteContact(contact);
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     );
                   },
                 );
