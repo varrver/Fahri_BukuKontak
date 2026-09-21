@@ -188,26 +188,21 @@ class _ContactPageState extends State<ContactPage> {
     super.dispose();
   }
 
-  void _deleteContact(Contact contact) {
-    showDialog(
+  Future<void> _hapusKontak(Contact contact) async {
+    final konfirmasi = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Konfirmasi Hapus'),
-          content: Text('Apakah Anda yakin ingin menghapus "${contact.name}"?'),
+          content:
+              Text('Apakah Anda yakin ingin menghapus "${contact.name}"?'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Batal'),
             ),
             TextButton(
-              onPressed: () {
-                _contacts.remove(contact);
-                Navigator.pop(context);
-                setState(() {});
-              },
+              onPressed: () => Navigator.pop(context, true),
               child: const Text(
                 'Hapus',
                 style: TextStyle(color: Colors.red),
@@ -217,6 +212,30 @@ class _ContactPageState extends State<ContactPage> {
         );
       },
     );
+    if (konfirmasi != true) return;
+    if (!mounted) return;
+
+    if (contact.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kontak belum memiliki ID, gagal dihapus'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _kontakRef.doc(contact.id).delete();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil dihapus')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghapus data: $e')),
+      );
+    }
   }
 
   @override
@@ -314,7 +333,7 @@ class _ContactPageState extends State<ContactPage> {
                               IconButton(
                                 icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () {
-                                  _deleteContact(contact);
+                                  _hapusKontak(contact);
                                 },
                               ),
                             ],
