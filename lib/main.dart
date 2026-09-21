@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -63,6 +64,9 @@ class Contact {
 
 final List<Contact> _contacts = [];
 final List<Contact> _favorites = [];
+
+CollectionReference<Map<String, dynamic>> get _kontakRef =>
+    FirebaseFirestore.instance.collection('kontak');
 
 // Halaman Beranda
 class HomePage extends StatefulWidget {
@@ -420,19 +424,24 @@ class _AddContactPageState extends State<AddContactPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
 
-  void _addContact() {
-    if (_nameController.text.isNotEmpty &&
-        _emailController.text.isNotEmpty &&
-        _phoneController.text.isNotEmpty) {
-      _contacts.add(
-        Contact(
-          name: _nameController.text,
-          email: _emailController.text,
-          phone: _phoneController.text,
-          category: _categoryController.text.isEmpty
-              ? null
-              : _categoryController.text,
-        ),
+  Future<void> _simpanKontak() async {
+    try {
+      await _kontakRef.add({
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'phone': _phoneController.text,
+        'category': _categoryController.text.isEmpty
+            ? null
+            : _categoryController.text,
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil disimpan')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menyimpan data: $e')),
       );
     }
   }
@@ -504,10 +513,10 @@ class _AddContactPageState extends State<AddContactPage> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        _addContact();
-                        Navigator.pop(context);
+                        await _simpanKontak();
+                        if (context.mounted) Navigator.pop(context);
                       }
                     },
                     child: const Text('Simpan'),
