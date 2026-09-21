@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "559342509154",
+    "project_id": "buku-kontak-fahri",
+    "storage_bucket": "buku-kontak-fahri.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559342509154:android:fabf762a596444b33c053b",
+        "android_client_info": {
+          "package_name": "com.example.kontak_form"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBV1XtUc08sZc1zyoy83cHYhwDBBUWfSsY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
