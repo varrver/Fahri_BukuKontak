@@ -1,30 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kontak_form/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Contact model', () {
+    test('toMap menghasilkan semua field', () {
+      final contact = Contact(
+        name: 'Budi',
+        email: 'budi@mail.com',
+        phone: '081234567890',
+        category: 'Teman',
+      );
+      expect(contact.toMap(), {
+        'name': 'Budi',
+        'email': 'budi@mail.com',
+        'phone': '081234567890',
+        'category': 'Teman',
+      });
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('fromMap mengembalikan Contact ber-id plus nilai null-safe', () {
+      final contact = Contact.fromMap('doc123', {
+        'name': 'Ani',
+        'email': 'ani@mail.com',
+        'phone': '0812',
+        'category': null,
+      });
+      expect(contact.id, 'doc123');
+      expect(contact.name, 'Ani');
+      expect(contact.email, 'ani@mail.com');
+      expect(contact.phone, '0812');
+      expect(contact.category, isNull);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('fromMap aman untuk dokumen dengan field kosong', () {
+      final contact = Contact.fromMap('doc2', {});
+      expect(contact.name, '');
+      expect(contact.email, '');
+      expect(contact.phone, '');
+      expect(contact.category, isNull);
+    });
   });
 }
