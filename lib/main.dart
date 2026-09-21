@@ -62,7 +62,6 @@ class Contact {
   }
 }
 
-final List<Contact> _contacts = [];
 final List<Contact> _favorites = [];
 
 CollectionReference<Map<String, dynamic>> get _kontakRef =>
@@ -315,19 +314,14 @@ class _ContactPageState extends State<ContactPage> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.edit),
-                                onPressed: () async {
-                                  final originalIndex =
-                                      _contacts.indexOf(contact);
-                                  await Navigator.push(
+                                onPressed: () {
+                                  Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => EditContactPage(
-                                        contact: contact,
-                                        index: originalIndex,
-                                      ),
+                                      builder: (context) =>
+                                          EditContactPage(contact: contact),
                                     ),
                                   );
-                                  setState(() {});
                                 },
                               ),
                               IconButton(
@@ -678,12 +672,10 @@ class AboutPage extends StatelessWidget {
 // Halaman Edit Kontak
 class EditContactPage extends StatefulWidget {
   final Contact contact;
-  final int index;
 
   const EditContactPage({
     super.key,
     required this.contact,
-    required this.index,
   });
 
   @override
@@ -717,15 +709,32 @@ class _EditContactPageState extends State<EditContactPage> {
     super.dispose();
   }
 
-  void _updateContact() {
-    if (widget.index >= 0 && widget.index < _contacts.length) {
-      _contacts[widget.index] = Contact(
-        name: _nameController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        category: _categoryController.text.isEmpty
+  Future<void> _updateKontak() async {
+    if (widget.contact.id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kontak belum memiliki ID, tidak dapat disimpan'),
+        ),
+      );
+      return;
+    }
+    try {
+      await _kontakRef.doc(widget.contact.id).update({
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'phone': _phoneController.text,
+        'category': _categoryController.text.isEmpty
             ? null
             : _categoryController.text,
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil diubah')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengubah data: $e')),
       );
     }
   }
@@ -796,10 +805,10 @@ class _EditContactPageState extends State<EditContactPage> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      _updateContact();
-                      Navigator.pop(context);
+                      await _updateKontak();
+                      if (context.mounted) Navigator.pop(context);
                     }
                   },
                   child: const Text('Simpan Perubahan'),
