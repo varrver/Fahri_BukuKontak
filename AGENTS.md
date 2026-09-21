@@ -19,11 +19,11 @@ Flutter school project: a contact-book app ("Buku Kontak") with an Indonesian UI
 
 ## Code structure
 All app code lives in `lib/main.dart` (~800 lines). There are no feature directories; every widget, page, and the model are in that one file. Add new code there unless you also refactor.
-- `Contact` model: `id` (Firestore document id), `name`, `email`, `phone`, `category` (`String?`); converts via `Contact.fromMap(String id, Map<String, dynamic>)` / `Contact.toMap()`. Fields that are missing/null in a doc default safely (`''` / `null`).
+- `Contact` model: `id` (Firestore document id), `name`, `email`, `phone`, `category` (`String?`); converts via `Contact.fromMap(String id, Map<String, dynamic>)` / `Contact.toMap()`. Fields that are missing/null/wrong-typed in a doc default safely (`''` / `null`).
 - Contacts are stored in Firestore through the top-level **getter** `_kontakRef` (`FirebaseFirestore.instance.collection('kontak')`). **Keep it a getter, not a top-level `final`** — a `final` would evaluate `FirebaseFirestore.instance` at import time and break the unit tests, which import `main.dart`.
 - `_favorites` is a module-level in-memory list (Favorites tab) — **not persisted**, out of LKM scope, and the only remaining in-memory state.
 - Pages: `HomePage` (TabBar: Kontak / Favorit + drawer), `ContactPage` (nested StreamBuilders: outer search stream, inner `_kontakRef.snapshots()`; loading spinner while `!hasData`, error text on `hasError`; delete via confirm dialog → `doc(id).delete()`), `FavoritePage`, `AddContactPage` (Form validation → `_kontakRef.add` with SnackBar "Data berhasil disimpan"), `AddFavoritePage` (plain `TextField`s, in-memory only), `EditContactPage` (takes **only** `Contact` — never an index; `_kontakRef.doc(id).update`), `AboutPage` (loads `assets/profile.jpg`).
-- All Firestore writes (`add`/`delete`/`update`) are wrapped in `try-catch` and report via `ScaffoldMessenger` SnackBar, plus an early `id.isEmpty` guard on delete/update.
+- All Firestore writes (`add`/`delete`/`update`) are wrapped in `try-catch` and report via `ScaffoldMessenger` SnackBar, plus an early `id.isEmpty` guard on delete/update. Add/Edit forms return `Future<bool>` and pop the page **only on success**, so a failed write keeps the draft on screen.
 - SnackBar uses the root `ScaffoldMessenger`, so it stays visible after the form page pops. `mounted` guards follow the pattern below.
 
 ## Conventions & lint gotchas

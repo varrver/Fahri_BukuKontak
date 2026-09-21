@@ -45,10 +45,10 @@ class Contact {
   factory Contact.fromMap(String id, Map<String, dynamic> data) {
     return Contact(
       id: id,
-      name: data['name'] as String? ?? '',
-      email: data['email'] as String? ?? '',
-      phone: data['phone'] as String? ?? '',
-      category: data['category'] as String?,
+      name: data['name'] is String ? data['name'] as String : '',
+      email: data['email'] is String ? data['email'] as String : '',
+      phone: data['phone'] is String ? data['phone'] as String : '',
+      category: data['category'] is String ? data['category'] as String : null,
     );
   }
 
@@ -454,7 +454,7 @@ class _AddContactPageState extends State<AddContactPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
 
-  Future<void> _simpanKontak() async {
+  Future<bool> _simpanKontak() async {
     try {
       await _kontakRef.add({
         'name': _nameController.text,
@@ -464,15 +464,17 @@ class _AddContactPageState extends State<AddContactPage> {
             ? null
             : _categoryController.text,
       });
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Data berhasil disimpan')),
       );
+      return true;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menyimpan data: $e')),
       );
+      return false;
     }
   }
 
@@ -545,8 +547,8 @@ class _AddContactPageState extends State<AddContactPage> {
                   ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        await _simpanKontak();
-                        if (context.mounted) Navigator.pop(context);
+                        final ok = await _simpanKontak();
+                        if (ok && context.mounted) Navigator.pop(context);
                       }
                     },
                     child: const Text('Simpan'),
@@ -709,14 +711,14 @@ class _EditContactPageState extends State<EditContactPage> {
     super.dispose();
   }
 
-  Future<void> _updateKontak() async {
+  Future<bool> _updateKontak() async {
     if (widget.contact.id.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Kontak belum memiliki ID, tidak dapat disimpan'),
         ),
       );
-      return;
+      return false;
     }
     try {
       await _kontakRef.doc(widget.contact.id).update({
@@ -727,15 +729,17 @@ class _EditContactPageState extends State<EditContactPage> {
             ? null
             : _categoryController.text,
       });
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Data berhasil diubah')),
       );
+      return true;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mengubah data: $e')),
       );
+      return false;
     }
   }
 
@@ -807,8 +811,8 @@ class _EditContactPageState extends State<EditContactPage> {
                 ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      await _updateKontak();
-                      if (context.mounted) Navigator.pop(context);
+                      final ok = await _updateKontak();
+                      if (ok && context.mounted) Navigator.pop(context);
                     }
                   },
                   child: const Text('Simpan Perubahan'),
